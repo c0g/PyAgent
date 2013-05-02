@@ -1,0 +1,4 @@
+#Vim' rubbish
+*.swp
+#osx rubbish
+.DS_store
