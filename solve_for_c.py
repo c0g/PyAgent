@@ -1,34 +1,36 @@
 import numpy as np
-def solve_for_c(threshold,Sigmainv,Kdd,fd,Zd,oldC,Znow): #Solve to find optimal control, given constraints.
+import scipy.optimize as opt
+def solve_for_c(Sigmainv,Kdd,fd,Zd,Znow): #Solve to find optimal control, given constraints.
+    print("Znow start of opt",Znow)
     mult = np.linalg.solve(Kdd,fd)
-    deltaC = np.Inf
-    control = oldC
-    mu1sel = np.eye(np.shape(Zd)[1])
-    mu1sel[-1] = 0
-    mu2sel = np.zeros((1,np.shape(Zd)[1]))
-    mu2sel[-1] = 1
-    loop = 1
-    while deltaC > threshold:
-        loop+=1
-        mu1 = (Znow-control).T.dot(mu1sel).dot(Znow-control) + 1
-        mu2 = mu2sel.dot((Znow-control)) + 1
-        rbfs = np.array([np.exp(-(Zdj.flatten()-control.flatten()).T.dot(Sigmainv.dot(Zdj.flatten()-control.flatten()))) * weight for Zdj,weight in zip(Zd,mult)]) #Radial basis functions
+    def t_con(control):
+        return((control[-1] - (1 +  Znow[-1])))
+    def t_dcon(control):
+        z = np.zeros(np.shape(control))
+        z[-1] = 1
+        return z
+    def x_con(control):
+        return np.linalg.norm(control.flatten()[:-1] - Znow.flatten()[:-1] - 0.1)
+    def x_dcon(control):
+        sel = np.eye(np.shape(control)[0])
+        sel[-1] = 0
+        return 2*(control.flatten()-Znow.flatten()).T.dot(sel)
+    
+    def cost(control):
+        control[-1] = Znow[0][-1] + 1
+        rbfs = np.array([(-(Zdj.flatten()-control.flatten()).T.dot(Sigmainv.dot(Zdj.flatten()-
+            control.flatten()))) * weight for Zdj,weight in zip(Zd,mult)])
+        f = np.sum(rbfs)
+        return(f.flatten())
+    constraints = [{'type':'ineq','fun':x_con, 'jac':x_dcon}]
+    print("Znow start of opt",Znow)
+    ret = opt.minimize(cost,Znow,method='COBYLA',options={'maxiter':10000})
+    control = ret.x
+    print(ret)
+    control[-1] = Znow[0][-1] + 1
+    print("Control out of loop",control)
+    print("Znow out of loop",Znow)
+    control.shape = (1,3)
 
-        zrbfs =np.array([Zdj.T.dot(Sigmainv) * rbf for rbf,Zdj in zip(rbfs,Zd)]) #rbfs times by ZdSiginv
-        premult = 2*Sigmainv * np.sum(rbfs) + 2*mu1sel
-        postmult = 2*np.sum(zrbfs,0) + 2*mu1*Znow.T.dot(mu1sel) + mu2*mu2sel
-        oldC = control
-        control = np.linalg.solve(premult,postmult.T)
-        deltaC = np.linalg.norm(oldC - control)
-        print(control)
     return control
-
-if __name__ == "__main__":
-    #Generate some fake data
-    Zd = np.array([[-1,-1],[1,-1],[-1,1],[1,1]]);
-    fd = np.array([[1],[5],[0],[-1]])
-    Kdd = np.eye(4)
-    oldc = np.array([[0],[0]])
-    Znow = np.array([[0],[0]])
-    Sigmainv = np.eye(2)
-    print(solve_for_c(0.00001,Sigmainv,Kdd,fd,Zd,oldc,Znow))
+    

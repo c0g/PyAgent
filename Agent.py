@@ -1,61 +1,50 @@
 import numpy as np
 import scipy as sp
+from solve_for_c import solve_for_c
+
 class Agent:
-    def __init__(self,x,t,world,worldModel,dim):
+    def __init__(self,Z,world,worldModel,utility):
         #Current location
-        self.x = x #current position
-        self.cLoc = x #control location
-        self.t = t #time
+        dim = np.shape(Z)[1]
+        self.Z = Z #current position
+        self.cLoc = Z #control location
         self.world = world #function expresssing the true reward function
         self.worldModel = worldModel #this is our GP
         self.moveSig = 0.01 #our uncertainty about future location, given a control signal
-        self.Sigmainv = worldModel.hyp[0]*np.eye(dim) + np.diag([self.moveSig] * dim-1 + [0]) 
+        self.Sigmainv = worldModel.hyp[0]*np.eye(dim) + np.diag([self.moveSig] * (dim-1) + [0]) 
+        self.movU = 0
+        self.utility = utility #Callable taking Ymu and Ys2
         return
     def plan(self):
         # Agent finds optimal move, and stores the expected utility of that
-        cLoc = self.solve_for_c()
-        self.cLoc = cLoc + 0.1*np.random.randn()
+        cLoc = solve_for_c(self.Sigmainv,self.worldModel.K,self.worldModel.F,self.worldModel.Z,self.Z)
+        self.cLoc = cLoc
+        self.worldModel.predict(self.cLoc)
+        self.movU = self.utility(self.worldModel.Ymu,self.worldModel.Ys2,self.cLoc)
+        self.worldModel.predict(self.Z) 
+        self.samU = self.utility(self.worldModel.Ymu,self.worldModel.Ys2,self.Z)
         return
     def execute(self):
-
-        return
-
-    def solve_for_c(self): #Solve to find optimal control, given constraints.
-        Kdd = self.world.K
-        fd = self.world.Y
-        mult = np.linalg.solve(Kdd,fd)
-        Xd = self.world.X
-        deltaC = np.Inf;
-        oldC = self.cLoc
-        while deltaC < self.threshold:
-            dist = Xd - oldC
-            rbfs = np.exp(dist.T.dot(self.Sigmainv.dot(dist))) #Radial basis functions
-            w_rbfs = Xd * rbfs #Weighted RBFs
-            mu1 = self.Sigmainv * dist * 2*w_rbfs.dot(mult)/(2*dist)#update mu1 from c
-            mu2 = self.Sigmainv * dist * 2*w_rbfs.dot(mult)#update mu2 from c
-            mu = np.vstack((2*mu1*dist,mu2))
-            c = self.Sigmainv * dist * (w_rbfs.dot(mult) / rbfs.dot(mult)) - mu#update c
-            deltaC = np.norm(oldC - c)
-            oldC = c
-        return c
-
-    def sample(self,sample):
-        sample.shape=(1,1)
-        if self.worldModel.X == None:
-            self.worldModel.infer(x,sample)
+        print(self.movU,self.samU)
+        if self.movU == self.samU:
+            print("Random Move... \n")
+            if np.random.randn > 0:
+                self.move()
+            else:
+                self.sample()
+        elif self.movU > self.samU:
+            self.move()
         else:
-            self.worldModel.infer_iter(x,sample)
+            self.sample()
         return
-    def utility(self,x,t):
-        return self.worldModel
 
-    def move(self):#Decide whether to move, or sample based on expected utility from a move and expected utility from a sample
-
+    def move(self):
+        print("Moving to: " +str(self.cLoc) + "\n")
+        self.Z = self.cLoc
         return
-    def find_cost(self):
-        Kdd = self.world.K
-        fd = self.world.Y
-        mult = np.linalg.solve(Kdd,fd)
-        Xd = self.world.X
-        self.cost = lambda c: 0 if (np.abs(c) >= 10) else - np.dot(np.exp(-(c-self.l[0])**2).T,mult) - self.world.get_Ys2(c)
+    def sample(self):
+        print("Sampling at " + str(self.Z) + "\n")
+        self.Z[0][-1] += 1
+        sample = self.world.calc(self.Z)
+        self.worldModel.infer(self.Z,sample)
         return
