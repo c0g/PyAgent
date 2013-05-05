@@ -17,7 +17,7 @@ class Agent:
         return
     def plan(self):
         # Agent finds optimal move, and stores the expected utility of that
-        cLoc = solve_for_c(self.Sigmainv,self.worldModel.K,self.worldModel.F,self.worldModel.Z,self.Z)
+        cLoc = solve_for_c(self.Sigmainv,self.worldModel.K,self.worldModel.F,self.worldModel.Z,self.Z,self.utility)
         self.cLoc = cLoc
         self.worldModel.predict(self.cLoc)
         self.movU = self.utility(self.worldModel.Ymu,self.worldModel.Ys2,self.cLoc)
