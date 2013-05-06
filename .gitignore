@@ -2,3 +2,4 @@
 *.swp
 #osx rubbish
 .DS_store
+PyGP/
