@@ -27,10 +27,10 @@ def solve_for_c(Sigmainv,Kdd,fd,Zd,Znow,utility): #Solve to find optimal control
     constraints = [{'type':'ineq','fun':x_con, 'jac':x_dcon}]
     tbound = Znow.flatten()[-1]
     bounds= [(None,None),(None,None),(tbound,tbound)]
-    ret = opt.minimize(cost,Znow,method='COBYLA',constraints=constraints,bounds=bounds,options={'maxiter':10000})
+    ret = opt.minimize(cost,Znow,method='CG',constraints=constraints,bounds=bounds,options={'maxiter':10000})
     if not ret.success:
         print ret
-    control = ret.x
+    control = ret.x.flatten()
     control[-1] = Znow[0][-1] + 1
     control.shape = (1,3)
 

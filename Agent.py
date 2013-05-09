@@ -25,18 +25,8 @@ class Agent:
         self.samU = self.utility(self.worldModel.Ymu,self.worldModel.Ys2,self.Z)
         return
     def execute(self):
-        print(self.movU,self.samU)
-        if self.movU == self.samU:
-            print("Random Move... \n")
-            if np.random.randn > 0:
-                self.move()
-            else:
-                self.sample()
-        elif self.movU > self.samU:
-            self.move()
-        else:
-            self.sample()
-        return
+        self.move()
+        self.sample()
 
     def move(self):
         print("Moving to: " +str(self.cLoc) + "\n")
@@ -45,6 +35,7 @@ class Agent:
     def sample(self):
         print("Sampling at " + str(self.Z) + "\n")
         self.Z[0][-1] += 1
-        sample = self.world.calc(self.Z)
+        sample = self.world.draw(self.Z)
+        self.world.infer(self.Z,sample)
         self.worldModel.infer(self.Z,sample)
         return

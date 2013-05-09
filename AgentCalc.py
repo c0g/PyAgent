@@ -1,8 +1,8 @@
-from GP import GaussianProcess
-from cov.SquaredExponential import SqExp
-from cov.Noise import Noise
-from cov.dist.Euclidean import EuclideanDist
-from cov.meta.Plus import Plus
+from PyGP.GP import GaussianProcess
+from PyGP.cov.SquaredExponentialEuc import SqExpEuc
+from PyGP.cov.Noise import Noise
+from PyGP.cov.dist.Euclidean import EuclideanDist
+from PyGP.cov.meta.Plus import Plus
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
@@ -23,12 +23,10 @@ nhyp = cov.hyp(1)
 hyp = np.array([-0.1,-0.1,1.])
 worldModel = GaussianProcess(hyp,cov)
 
-#Luckily our hazard function is a sqexp centered at x=2
-centers = np.array([[1,1],[2,2]])
-magnitudes = np.array([1,2])
-speeds = np.array([0.01,0.01])
-frequencies = np.array([0.1,0.1])
-world = Reward(centers,magnitudes,speeds,frequencies)
+world = GaussianProcess(hyp,cov)
+xobs = np.array([[0,0,0]])
+fobs = np.array([[0]])
+world.infer(xobs,fobs)
 
 #Generate a 2d meshgrid
 x = np.linspace(-10,10,100)
