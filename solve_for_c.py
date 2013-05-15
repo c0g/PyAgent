@@ -1,38 +1,45 @@
 import numpy as np
 import scipy.optimize as opt
-def solve_for_c(Sigmainv,Kdd,fd,Zd,Znow,utility): #Solve to find optimal control, given constraints.
-    print("Znow start of opt",Znow)
-    mult = np.linalg.solve(Kdd,fd)
-    def t_con(control):
-        return((control[-1] - (1 +  Znow[-1])))
-    def t_dcon(control):
-        z = np.zeros(np.shape(control))
-        z[-1] = 1
-        return z
-    def x_con(control):
-        return np.linalg.norm(control.flatten()[:-1] - Znow.flatten()[:-1]) - 0.1
-    def x_dcon(control):
-        sel = np.eye(np.shape(control)[0])
-        sel[-1] = 0
-        return 2*(control.flatten()-Znow.flatten()).T.dot(sel)
-    
-    def cost(control):
-        control[-1] = Znow[0][-1] + 1
-        Ks = np.array([(-(Zdj.flatten()-control.flatten()).T.dot(Sigmainv.dot(Zdj.flatten()-
-            control.flatten()))) for Zdj in Zd])
-        Ymu = np.dot(Ks.T,mult)
-        Ys2 = np.dot(Ks,np.linalg.solve(Kdd,Ks))
-        f = utility(Ymu,Ys2,control)
-        return(f.flatten())
-    constraints = [{'type':'ineq','fun':x_con, 'jac':x_dcon}]
-    tbound = Znow.flatten()[-1]
-    bounds= [(None,None),(None,None),(tbound,tbound)]
-    ret = opt.minimize(cost,Znow,method='CG',constraints=constraints,bounds=bounds,options={'maxiter':10000})
+from expectations import expected_mean
+from PyGP.GP import GaussianProcess
+from PyGP.cov.SquaredExponentialARD import SqExpARD
+def solve_for_c(utility,gp,Sigma_c): #Solve to find optimal control, given constraints.
+    Znow = gp.Z[-1].flatten()
+    def con(control,Znow):
+         x = Znow.flatten()[:-1]
+         dist = np.linalg.norm(control - x)
+         return 1 - dist**2
+    def dcon(control,Znow):
+         x = Znow.flatten()[:-1]
+         return  - 2 * (control - x)
+
+    eq_con = { 'type':'eq',
+         'fun':con,
+         'dfun':dcon,
+         'args':[Znow] } 
+    def f(control):return expected_mean(control,Sigma_c,gp)[0]
+    def df(control): return expected_mean(control,Sigma_c,gp)[1]
+    ret = opt.minimize(f,Znow[:-1],jac=df,method='SLSQP',constraints=eq_con)
     if not ret.success:
         print ret
-    control = ret.x.flatten()
-    control[-1] = Znow[0][-1] + 1
-    control.shape = (1,3)
+    return(ret.x.flatten())
 
-    return control
-    
+if __name__=="__main__":
+    """These functions are defined for a GP, so we need to define a GP to test them over"""
+    cov = SqExpARD()
+    Sigma_c = np.eye(3)*0.1
+    Sigma_c[-1] = 0
+    hyp = np.array([1.,.9,2.,1.])
+    lik = np.array([0.01])
+    gp = GaussianProcess(lik,hyp,cov)
+    """Make a fake observation, just to constrain the GP..."""
+    gp.observe(np.array([[1.,1.,1.]]),np.array([1]))
+    """Now draw a few values, then push them straight back into the GP"""
+    Z1 = np.array([[2.,2.,2.]])
+    gp.observe(Z1,gp.draw(Z1))
+    Z2 = np.array([[0.,0.,3.]])
+    gp.observe(Z2,gp.draw(Z2))
+    dist = 0.0001
+    control = np.array([1.5,1.5])
+    def utility(ctl,sig,gp): -expected_mean(ctl,sig,gp)
+    print(solve_for_c(utility,gp,Sigma_c))

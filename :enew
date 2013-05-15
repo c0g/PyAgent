@@ -1,0 +1,12 @@
+scales = np.random.randn(20,1)*1
+centers = np.random.randn(20,2)*4
+signs = np.sign(np.random.randn(20,1))
+rates = np.random.randn(20,1)*0.1
+def reward(z):
+    t = z.flatten()[-1]
+    x = z.flatten()[:-1]
+    f = 0
+    for rate,sign,scale,center in zip(rates,signs,scales,centers):
+        f += sign.flatten()*np.exp(-(center - x).T.dot(center - x)/10)
+    reward = f
+    return reward
