@@ -5,25 +5,31 @@ from PyGP.GP import GaussianProcess
 from PyGP.cov.SquaredExponentialARD import SqExpARD
 import pylab as pb
 pb.ion()
+from IPython.core.debugger import Tracer; debug_here = Tracer()
 
 def expected_mean(control_aug,Sigma_c,gp):
     Znow = gp.Z[-1]
+    Znow[0] += 1
+    d = np.shape(Znow.flatten())[0]
     Zd = gp.Z
-    ell = np.exp(-2*gp.hyp[1:])
+    ell = 2*np.exp(2*gp.hyp[1:])
     Sigma_gp = np.diag(ell)
+
     Kddifd = np.linalg.solve(gp.cov.K(gp.hyp,gp.Z,gp.Z)[0],gp.F)
     Zn = Znow.flatten()
     t = Zn[-1] + 1
     c_aug_flat = control_aug.flatten()
     control = np.hstack((c_aug_flat, np.array([t])))
     Sigma = Sigma_c + Sigma_gp
-
-    def rbfs(zd):  return np.exp(-(zd-control).T.dot(np.linalg.solve(Sigma,zd-control)))
-    def drbfs(zd): return -2*np.linalg.solve(Sigma,control-zd) * rbfs(zd)
-    
-    f = np.sum([rbfs(zd)*w for  zd,w in zip(Zd,Kddifd)])
-    df = np.sum(np.array([drbfs(zd) for zd  in Zd]),0) 
-    return (f.flatten(),df[:-1].flatten())
+    scale = 1/np.sqrt((2*np.pi)**d * np.linalg.det(Sigma))
+    def rbfs(zd):  return np.exp(-(zd-control).T.dot(np.linalg.inv(Sigma).dot(zd-control)))
+    def drbfs(zd): return -2*(control-zd).dot(np.linalg.inv(Sigma)) * rbfs(zd)
+    f=0
+    df=np.zeros(control.shape[0])
+    for i,(zd,w) in enumerate(zip(Zd,Kddifd)):
+        f += scale * rbfs(zd) * w
+        df += scale * drbfs(zd) * w
+    return (f.flatten(),df[1:].flatten())
 
 def expected_variance(control_aug,Sigma_c,gp):
     """Our current location is the last entry in the GP."""

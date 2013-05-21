@@ -23,9 +23,9 @@ def sample(z,gp):
     r = reward(z)
     print("Reward: " + str(r) + " at " + str(z))
     gp.observe(z,np.array([r]))
-    ret = gp.optimise_hyper()
-    if not ret.success:
-        print(ret)
+    #ret = gp.optimise_hyper()
+    #if not ret.success:
+    #    print(ret)
     return
 def draw_reward(t):
     x=y=np.linspace(-10,10,30)
@@ -39,7 +39,8 @@ def draw_reward(t):
     plt.subplot(121)
     CS = plt.contourf(x,y,R)
     plt.colorbar(CS, shrink=0.8, extend='both')
-def draw_agent(t,gp):
+    return CS
+def draw_agent(t,gp,CS):
     x=y=np.linspace(-10,10,30)
     (X,Y) = np.meshgrid(x,y)
     X.shape=Y.shape=(30**2,1)
@@ -50,31 +51,33 @@ def draw_agent(t,gp):
         R[i] = gp.Ymu
     R.shape=(30,30)
     plt.subplot(122)
-    CS = plt.contourf(x,y,R)
+    plt.contourf(x,y,R,CS.levels)
     plt.colorbar(CS, shrink=0.8, extend='both')
 
 
 cov = SqExpARD()
-Sigma_c = np.eye(3)*0.1
-Sigma_c[-1] = 0
-hyp = np.array([-1,-1,-1,10])
-lik = np.array([-10])
+Sigma_c = np.eye(3)/0.001
+hyp = np.log(np.array([10,2,2,100]))
+lik = np.array([-1])
 gp = GaussianProcess(lik,hyp,cov)
-"""Make a fake observation, just to constrain the GP..."""
-Z1 = np.array([[2.,2.,2.]])
+Z1 = np.array([[-1.,0.,2.]])
 sample(Z1,gp)
-Z2 = np.array([[2.,1.,3.]])
+Z2 = np.array([[1.,0.,3.]])
 sample(Z2,gp)
-def utility(ctl,sig,gp): -expected_mean(ctl,sig,gp)
-
+Z3 = np.array([[0.,1.,4.]])
+sample(Z3,gp)
+Z4 = np.array([[0.,-1.,5.]])
+sample(Z4,gp)
+plt.show()
 for t in xrange(0,10):
     oldT = gp.Z[-1][-1]
-    control = solve_for_c(utility,gp,Sigma_c)
-    Z = np.array([np.hstack((control+np.random.randn(2)*0.1,np.array(oldT+1)))]) 
+    control = solve_for_c(expected_mean,gp,Sigma_c)
+    Z = np.array([np.hstack((control,np.array(oldT+1)))]) + np.random.randn(3)*0.001
+    gp.hyp=hyp
     sample(Z,gp)
     plt.clf()
-    draw_reward(oldT+1)
-    draw_agent(oldT+1,gp)
+    CS=draw_reward(oldT+1)
+    draw_agent(oldT+1,gp,CS)
     plt.plot(Z.flatten()[0],Z.flatten()[1],'o')
     plt.draw()
     time.sleep(0.1)
