@@ -3,3 +3,4 @@
 #osx rubbish
 .DS_store
 #Python rubbish
+*.pyc
