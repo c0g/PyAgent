@@ -1,26 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
-
-
-def draw_world(t):
-    x = y = np.linspace(-10, 10, 50)
-    (X,Y) = np.meshgrid(x, y)
-    X.shape = Y.shape = (50**2, 1)
-    R = np.zeros((50**2,1))
-    t = np.ones(np.shape(X)) * gp.Z[-1][-1]
-    ZPred = np.hstack((X,Y,t))
-    for i,(xl,yl,tl) in enumerate(zip(X,Y,t)):
-        z = np.array([[xl,yl,tl]])
-        z.shape = (1,3)
-        gp.predict(z)
-        R[i] = gp.Ymu
-    R.shape=(50,50)
-    if cs:
-        CS = plt.contourf(x,y,R,cs.levels)
-    else:
-        CS = plt.contourf(x,y,R,500)
-    plt.colorbar(CS, shrink=0.8)
-    plt.plot(gp.Z[:,0],gp.Z[:,1])
 
 
 class Reward(object):
@@ -41,11 +19,6 @@ class Reward(object):
         return(reward)
 
     def draw(self, t):
-        x = y = np.linspace(-10, 10, 50)
-        (X, Y) = np.meshgrid(x, y)
-        X.shape = Y.shape = (50**2, 1)
-        R = np.zeros((50**2, 1))
-        t = np.ones(np.shape(X)) * t
         for i, (xl, yl, tl) in enumerate(zip(X, Y, t)):
             z = np.array([[xl, yl, tl]])
             R[i] = self.calc(z)

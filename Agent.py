@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.optimize as opt
-from solve_for_c import solve_for_c
 
 
 def solve_chol(A, b):
