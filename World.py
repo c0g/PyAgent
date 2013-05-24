@@ -18,11 +18,20 @@ class Reward(object):
         reward = f
         return(reward)
 
-    def draw(self, t):
-        for i, (xl, yl, tl) in enumerate(zip(X, Y, t)):
+    def draw(self, zlim, t, ax, cs=None):
+        zmin = zlim[0]
+        zmax = zlim[1]
+        x = y = np.linspace(zmin, zmax)
+        (X, Y) = np.meshgrid(x, y)
+        X.shape = Y.shape = (50**2, 1)
+        T = np.ones((50**2, 1)) * t
+        R = np.zeros((50**2, 1))
+        for i, (xl, yl, tl) in enumerate(zip(X, Y, T)):
             z = np.array([[xl, yl, tl]])
             R[i] = self.calc(z)
         R.shape = (50, 50)
-        CS = plt.contourf(x, y, R, 500)
-        plt.colorbar(CS, shrink=0.8)
+        if cs:
+            CS = ax.contourf(x, y, R, cs.levels)
+        else:
+            CS = ax.contourf(x, y, R, 500)
         return CS

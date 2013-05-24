@@ -72,3 +72,20 @@ class Agent:
                 'args': [self.gp]}
         ret = opt.minimize(self.mean, control, jac=True, method='SLSQP', constraints=cons)
         return(ret.x)
+
+    def draw(self, zlim, t, ax, cs=None):
+        zmin = zlim[0]
+        zmax = zlim[1]
+        x = y = np.linspace(zmin, zmax)
+        (X, Y) = np.meshgrid(x, y)
+        T = np.ones((50**2, 1)) * t
+        X.shape = Y.shape = (50**2, 1)
+        Z = np.hstack((X, Y, T))
+        self.gp.predict(Z)
+        R = self.gp.Ymu
+        R.shape = (50, 50)
+        if cs:
+            CS = ax.contourf(x, y, R, cs.levels)
+        else:
+            CS = ax.contourf(x, y, R, 500)
+        return CS
