@@ -74,9 +74,12 @@ class Agent:
         return(ret.x)
 
     def draw(self, zlim, t, ax, cs=None):
-        zmin = zlim[0]
-        zmax = zlim[1]
-        x = y = np.linspace(zmin, zmax)
+        xmin = zlim[0]
+        xmax = zlim[1]
+        ymin = zlim[2]
+        ymax = zlim[3]
+        x = np.linspace(xmin, xmax)
+        y = np.linsapce(ymin, ymax)
         (X, Y) = np.meshgrid(x, y)
         T = np.ones((50**2, 1)) * t
         X.shape = Y.shape = (50**2, 1)

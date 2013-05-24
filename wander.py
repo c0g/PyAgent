@@ -20,8 +20,8 @@ start_z = np.array([[0., 0., 0.]])
 agent = Agent(gp, reward, sig, start_z)
 agent2 = Agent(gp2, reward, sig2, start_z)
 fig = plt.figure(figsize=(20,7), dpi=300)
-zlim = (-10, 10)
-for i in xrange(0, 100):
+zlim = (-10, 10, -10, 10)
+for i in xrange(0, 1000):
     agent.observe()
     agent.decide()
     agent.act()
@@ -30,7 +30,14 @@ for i in xrange(0, 100):
     agent2.act()
 
     t = agent.gp.Z[-1].flatten()[-1]
-
+    a = [0] * 4
+    a[0] = agent.gp.Z[-1].flatten()[0]
+    a[1] = agent.gp.Z[-1].flatten()[1]
+    a[2] = agent.gp.Z[-1].flatten()[0]
+    a[3] = agent.gp.Z[-1].flatten()[1]
+    extent = np.max(np.abs(a))
+    lim = extent + 3 if extent > 10 else 10
+    zlim = (-lim, lim, -lim, lim)
     fig.clf()
     ax1 = fig.add_subplot(1, 3, 1)
     ax1.set_aspect('equal')
