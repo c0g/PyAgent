@@ -14,11 +14,12 @@ def solve_chol(A, b):
 class Agent:
 
     def __init__(self, gp, reward, sig, start_z):
-        self.Sigma_c = np.eye(start_z.shape[1]) * sig**2
+        self.Sigma_c = np.diag(sig)
         self.gp = gp
         self.reward = reward
         self.z = start_z
         self.z_next = start_z
+        self.last_opt = 0
 
     def act(self):
         self.z = self.z_next
