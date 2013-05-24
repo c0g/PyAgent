@@ -15,7 +15,7 @@ gp = GaussianProcess(lik, hyp, cov)
 gp2 = GaussianProcess(lik, hyp, cov)
 
 sig =np.ones((3,)) * 0.001
-sig2 = np.ones((3,)) * 0.01
+sig2 = np.ones((3,)) * 0.1
 start_z = np.array([[0., 0., 0.]])
 agent = Agent(gp, reward, sig, start_z)
 agent2 = Agent(gp2, reward, sig2, start_z)
