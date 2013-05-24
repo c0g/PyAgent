@@ -49,4 +49,4 @@ for i in xrange(0, 1000):
     cs = reward.draw(zlim, t, ax1)
     agent.draw(zlim, t, ax2, cs)
     agent2.draw(zlim, t, ax3, cs)
-    fig.savefig("./images/" + str(i).zfill(4) + ".jpg")
+    fig.savefig("./images4/" + str(i).zfill(4) + ".jpg")
