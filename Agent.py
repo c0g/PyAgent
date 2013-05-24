@@ -79,7 +79,7 @@ class Agent:
         ymin = zlim[2]
         ymax = zlim[3]
         x = np.linspace(xmin, xmax)
-        y = np.linsapce(ymin, ymax)
+        y = np.linspace(ymin, ymax)
         (X, Y) = np.meshgrid(x, y)
         T = np.ones((50**2, 1)) * t
         X.shape = Y.shape = (50**2, 1)
