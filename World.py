@@ -24,7 +24,7 @@ class Reward(object):
         ymin = zlim[2]
         ymax = zlim[3]
         x = np.linspace(xmin, xmax)
-        y = np.linsapce(ymin, ymax)
+        y = np.linspace(ymin, ymax)
         (X, Y) = np.meshgrid(x, y)
         X.shape = Y.shape = (50**2, 1)
         T = np.ones((50**2, 1)) * t
