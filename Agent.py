@@ -88,4 +88,5 @@ class Agent:
             CS = ax.contourf(x, y, R, cs.levels)
         else:
             CS = ax.contourf(x, y, R, 500)
+        ax.plot(self.gp.Z[-1].flatten()[0], self.gp.Z[-1].flatten()[1], 'o')
         return CS

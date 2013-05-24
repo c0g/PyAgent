@@ -19,7 +19,7 @@ sig2 = np.ones((3,)) * 0.01
 start_z = np.array([[0., 0., 0.]])
 agent = Agent(gp, reward, sig, start_z)
 agent2 = Agent(gp2, reward, sig2, start_z)
-fig = plt.figure()
+fig = plt.figure(figsize=(20,7), dpi=300)
 zlim = (-10, 10)
 for i in xrange(0, 100):
     agent.observe()
@@ -33,8 +33,11 @@ for i in xrange(0, 100):
 
     fig.clf()
     ax1 = fig.add_subplot(1, 3, 1)
+    ax1.set_aspect('equal')
     ax2 = fig.add_subplot(1, 3, 2)
+    ax2.set_aspect('equal')
     ax3 = fig.add_subplot(1, 3, 3)
+    ax3.set_aspect('equal')
 
     cs = reward.draw(zlim, t, ax1)
     agent.draw(zlim, t, ax2, cs)
